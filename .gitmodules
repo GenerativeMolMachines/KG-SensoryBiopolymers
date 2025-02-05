@@ -1,0 +1,12 @@
+[submodule "BiopolymersKG"]
+	path = BiopolymersKG
+	url = git@github.com:GenerativeMolMachines/BiopolymersKG.git
+[submodule "AntibodyAptamerGeneration"]
+	path = AntibodyAptamerGeneration
+	url = git@github.com:GenerativeMolMachines/AntibodyAptamerGeneration.git
+[submodule "CyclicPeptideDesign"]
+	path = CyclicPeptideDesign
+	url = git@github.com:GenerativeMolMachines/CyclicPeptideDesign.git
+[submodule "siRNA"]
+	path = siRNA
+	url = git@github.com:GenerativeMolMachines/siRNA.git
