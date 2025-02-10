@@ -182,7 +182,7 @@ protein_data_b['subtype'] = None
 protein_data_b['representation_type'] = 'sequence'
 
 # Unite data with dropping duplicates
-protein_data = pd.concat([protein_data_a, protein_data_b]).drop_duplicates(subset=['name']).reset_index(drop=True)
+protein_data = pd.concat([protein_data_a, protein_data_b]).drop_duplicates(subset=['name', 'content']).reset_index(drop=True)
 
 # Create interaction_data
 interaction_data = data[['name_a', 'name_b', 'Score']].rename(columns={
@@ -191,12 +191,16 @@ interaction_data = data[['name_a', 'name_b', 'Score']].rename(columns={
     'Score': 'kd'
 })
 
+# Dropping dupclicates
+protein_data.drop_duplicates(subset=['name', 'content'], inplace=True)
+interaction_data.drop_duplicates(subset=['protein_name_a', 'protein_name_b'], inplace=True)
+
 # Save data
 protein_data.to_csv('protein_data_biogrid.csv', index=False)
 interaction_data.to_csv('protein_protein_interaction_data.csv', index=False)
 
 print("Protein Data:")
-print(protein_data.head())
+print(protein_data.info())
 
 print("\nInteraction Data:")
-print(interaction_data.head())
+print(interaction_data.info())
