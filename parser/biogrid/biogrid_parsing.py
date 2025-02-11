@@ -10,7 +10,7 @@ import numpy as np
 input_file = 'biogrid.txt'
 output_file = 'biogrid_filtered.csv'
 final_file = 'biogrid_final.csv'
-
+"""
 data = pd.read_csv(input_file, sep="\t")
 
 print("Data read:")
@@ -158,9 +158,49 @@ data.to_csv(final_file, index=False)
 
 print(f"File saved as {final_file}")
 del data
-
+"""
 # Formate data
 data = pd.read_csv(final_file)
+
+data.drop_duplicates(subset=['name_a', 'name_b', 'sequence_a', 'sequence_b'], inplace=True)
+
+# Processing "bad" values
+data = data.applymap(lambda x: None if x == '-' else x)
+data = data.applymap(lambda x: x.replace('"', '') if isinstance(x, str) else x)
+
+error_values = set()
+symbols_to_remove = {'<', '>', ',', ' '}
+
+
+def convert_to_float(value, symbols_to_remove=None, error_values=None):
+    if pd.isna(value) or value in ['', ' ']:
+        return None
+
+    try:
+        cleaned_value = ''.join(c for c in str(value) if c not in symbols_to_remove).strip()
+
+        # Check for exponential values
+        if 'e' in cleaned_value.lower():
+            base, exponent = cleaned_value.lower().split('e')
+
+            exponent = exponent.replace('+', '')
+
+            base = float(base)
+            exponent = int(exponent)
+
+            return base * (10 ** exponent)
+
+        return float(cleaned_value)
+
+    except (ValueError, TypeError):
+        error_values.add(value)
+        return None
+
+
+data['Score'] = data['Score'].apply(lambda x: convert_to_float(x, symbols_to_remove, error_values))
+print(error_values)
+
+# Forming datasets
 protein_data_a = data[['name_a', 'sequence_a', 'Qualifications']].rename(columns={
     'name_a': 'name',
     'sequence_a': 'content',
@@ -188,12 +228,16 @@ protein_data = pd.concat([protein_data_a, protein_data_b]).drop_duplicates(subse
 interaction_data = data[['name_a', 'name_b', 'Score']].rename(columns={
     'name_a': 'protein_name_a',
     'name_b': 'protein_name_b',
-    'Score': 'kd'
 })
+
+interaction_data['kd'] = None
 
 # Dropping dupclicates
 protein_data.drop_duplicates(subset=['name', 'content'], inplace=True)
 interaction_data.drop_duplicates(subset=['protein_name_a', 'protein_name_b'], inplace=True)
+
+protein_data.reset_index(drop=True, inplace=True)
+interaction_data.reset_index(drop=True, inplace=True)
 
 # Save data
 protein_data.to_csv('protein_data_biogrid.csv', index=False)
