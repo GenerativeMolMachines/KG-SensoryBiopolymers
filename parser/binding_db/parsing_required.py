@@ -48,9 +48,63 @@ with open(output_csv, mode="w", newline="", encoding="utf-8") as csv_file:
 print(f"Selected properties have been extracted and saved in {output_csv}")
 
 # Initial data import
-df = pd.read_csv('binding_db_selected_properties.csv')
-print('data have been imported')
+df = pd.read_csv("binding_db_selected_properties.csv")
+print("data have been imported")
+print(f"\nDatasets info: \n {df.info()}")
 
+# Managing Nans and duplicates
+df = df.dropna(subset=["UniProt (SwissProt) Recommended Name of Target Chain"])
+df = df.dropna(subset=["BindingDB Target Chain Sequence"])
+df = df.dropna(subset=["BindingDB Ligand Name"])
+df = df.dropna(subset=["smiles"])
+
+df = df.applymap(lambda x: x.replace('"', '') if isinstance(x, str) else x)
+
+df.drop_duplicates(
+    subset=[
+        "UniProt (SwissProt) Recommended Name of Target Chain", "BindingDB Target Chain Sequence",
+        "BindingDB Ligand Name", "smiles"
+    ],
+    inplace=True
+)
+df.reset_index(drop=True, inplace=True)
+print(f"\nDatasets info after cleaning: \n{df.info()}")
+
+# Processing "bad" values
+error_values = set()
+symbols_to_remove = {'<', '>', ',', ' '}
+
+
+def convert_to_float(value, symbols_to_remove=None, error_values=None):
+    if pd.isna(value) or value in ['', ' ']:
+        return None
+
+    try:
+        cleaned_value = ''.join(c for c in str(value) if c not in symbols_to_remove).strip()
+
+        # Check for exponential values
+        if 'e' in cleaned_value.lower():
+            base, exponent = cleaned_value.lower().split('e')
+
+            exponent = exponent.replace('+', '')
+
+            base = float(base)
+            exponent = int(exponent)
+
+            return base * (10 ** exponent)
+
+        return float(cleaned_value)
+
+    except (ValueError, TypeError):
+        error_values.add(value)
+        return None
+
+
+df["Kd (nM)"] = df.apply(
+        lambda row: row["Ki (nM)"] if pd.isna(row["Kd (nM)"]) else row["Kd (nM)"], axis=1
+    )
+df["Kd (nM)"] = df["Kd (nM)"].apply(lambda x: convert_to_float(x, symbols_to_remove, error_values))
+print(f'\nError values: {error_values}')
 # Create protein data
 protein_data = pd.DataFrame({
     "name": df["UniProt (SwissProt) Recommended Name of Target Chain"],
@@ -80,6 +134,19 @@ interaction_data = pd.DataFrame({
     "kd": df["Kd (nM)"]
 })
 print('interaction data data have been formed')
+
+# Drop duplicates
+protein_data.drop_duplicates(subset=['name', 'content'], inplace=True)
+molecule_data.drop_duplicates(subset=['name', 'content'], inplace=True)
+interaction_data.drop_duplicates(subset=['protein_name', 'small_molecule_name'], inplace=True)
+
+protein_data.reset_index(drop=True, inplace=True)
+molecule_data.reset_index(drop=True, inplace=True)
+interaction_data.reset_index(drop=True, inplace=True)
+
+print(protein_data.info())
+print(molecule_data.info())
+print(interaction_data.info())
 
 # Save data
 protein_data.to_csv("protein_data.csv", index=False)
