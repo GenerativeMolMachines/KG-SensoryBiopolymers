@@ -7,3 +7,6 @@
 [submodule "CyclicPeptideDesign"]
 	path = CyclicPeptideDesign
 	url = git@github.com:GenerativeMolMachines/CyclicPeptideDesign.git
+[submodule "BindingVsEnergyPredictionModels"]
+	path = BindingVsEnergyPredictionModels
+	url = git@github.com:GenerativeMolMachines/BindingVsEnergyPredictionModels.git
