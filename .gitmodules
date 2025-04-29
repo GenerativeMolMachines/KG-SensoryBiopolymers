@@ -7,6 +7,3 @@
 [submodule "CyclicPeptideDesign"]
 	path = CyclicPeptideDesign
 	url = git@github.com:GenerativeMolMachines/CyclicPeptideDesign.git
-[submodule "siRNA"]
-	path = siRNA
-	url = git@github.com:GenerativeMolMachines/siRNA.git
