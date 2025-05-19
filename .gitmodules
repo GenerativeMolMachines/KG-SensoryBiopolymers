@@ -10,3 +10,6 @@
 [submodule "BindingVsEnergyPredictionModels"]
 	path = BindingVsEnergyPredictionModels
 	url = git@github.com:GenerativeMolMachines/BindingVsEnergyPredictionModels.git
+[submodule "siRNA_RPAII"]
+	path = siRNA_RPAII
+	url = git@github.com:GenerativeMolMachines/siRNA_RPAII.git
