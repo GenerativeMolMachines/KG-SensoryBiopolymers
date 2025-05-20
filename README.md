@@ -11,20 +11,26 @@ This project aims to develop a multimodal model based on a knowledge graph of se
 ## Projects overview (submodules)
 
 ### [BiopolymersKG](https://github.com/GenerativeMolMachines/BiopolymersKG)
-Development of a system using knowledge graph-based embeddings and machine learning methods for peptide analysis.
+Development of a system using knowledge graph-based embeddings and machine learning methods.
 
 ### [BindingVsEnergyPredictionModels](https://github.com/GenerativeMolMachines/BindingVsEnergyPredictionModels)
-Api applications of models for predicting binding, mfe and affinity between different structures and complexes to populate the graph.
+API applications of models for predicting binding, mfe and affinity between different structures and complexes to populate the graph.
 
 ### [siRNA_RPAII](https://github.com/GenerativeMolMachines/siRNA_RPAII)
 Machine learning on autoencoder- and LLM-derived embeddings for the design of highly effective chemically modified siRNAs for gene knockdown
 
 ### [AntibodyAptamerGeneration](https://github.com/GenerativeMolMachines/AntibodyAptamerGeneration)
-Development of a generative model of aptamers.
+Development of a model to generate optimal aptamer sequences based on antibody and target data, offering a faster and more reliable alternative to antibodies for medical and research applications.
 
 ### [CyclicPeptideDesign](https://github.com/GenerativeMolMachines/CyclicPeptideDesign)
 A multimodal deep learning approach for cyclic peptide-based antibiotic discovery.
 
+## Latest updates
+ - BindingVsEnergyPredictionModels - API applications for third-party filling of the graph with new links using ML and DL.
+ - BiopolymersKG - codes for database operation and statistics
+ - preview version of the model for link prediction
+
+\+ updates on personal projects
 
 ## Overview
 [KG_embeddings.ipynb](https://github.com/GenerativeMolMachines/KG-SensoryBiopolymers/blob/main/src/learning/KG_embeddings.ipynb), executed in Google Colab using GPU Tesla T4, represents a complete pipeline for processing a Knowledge Graph (KG) based on triplet data (subject, predicate, object) loaded from a .CSV file. It includes data preparation, model training, quality evaluation, missing link prediction, embedding clustering, and graph structure analysis. 
