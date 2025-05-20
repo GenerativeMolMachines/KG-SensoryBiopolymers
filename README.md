@@ -1,6 +1,6 @@
 # KG-SensoryBiopolymers
 
-This project aims to develop a multimodal model based on a knowledge graph of sensing biopolymers. It will be used to structure data to establish relationships between biological entities used in sensing, such as proteins and nucleic acids, and their relationships and activities. In contrast to the classical approach, where embeddings of monomodal models are applied, our solution will allow us to generate a holistic representation of systems covering different aspects of their functioning. In addition to knowledge graph embeddings, the following data structures and modalities are envisioned:
+This project aims to develop a multimodal model based on a knowledge graph of sensing biopolymers. It will be used to structure data to establish relationships between biological entities used in sensing, such as proteins and nucleic acids, and their relationships and activities. In contrast to the classical approach, where embeddings of monomodal models are applied, our solution will allow us to generate a holistic representation of systems covering different aspects of their functioning.
 
 ## Projects overview (submodules)
 
