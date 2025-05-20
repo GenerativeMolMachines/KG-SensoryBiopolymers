@@ -8,6 +8,24 @@ This project aims to develop a multimodal model based on a knowledge graph of se
 - spectral data - to characterize optical properties of compounds and features of electron density distribution;
 - fluorescence and electron microscopy images - to characterize more specific therapeutic and morphological properties. 
 
+## Projects overview (submodules)
+
+### [BiopolymersKG](https://github.com/GenerativeMolMachines/BiopolymersKG)
+Development of a system using knowledge graph-based embeddings and machine learning methods for peptide analysis.
+
+### [BindingVsEnergyPredictionModels](https://github.com/GenerativeMolMachines/BindingVsEnergyPredictionModels)
+Api applications of models for predicting binding, mfe and affinity between different structures and complexes to populate the graph.
+
+### [siRNA_RPAII](https://github.com/GenerativeMolMachines/siRNA_RPAII)
+Machine learning on autoencoder- and LLM-derived embeddings for the design of highly effective chemically modified siRNAs for gene knockdown
+
+### [AntibodyAptamerGeneration](https://github.com/GenerativeMolMachines/AntibodyAptamerGeneration)
+Development of a generative model of aptamers.
+
+### [CyclicPeptideDesign](https://github.com/GenerativeMolMachines/CyclicPeptideDesign)
+A multimodal deep learning approach for cyclic peptide-based antibiotic discovery.
+
+
 ## Overview
 [KG_embeddings.ipynb](https://github.com/GenerativeMolMachines/KG-SensoryBiopolymers/blob/main/src/learning/KG_embeddings.ipynb), executed in Google Colab using GPU Tesla T4, represents a complete pipeline for processing a Knowledge Graph (KG) based on triplet data (subject, predicate, object) loaded from a .CSV file. It includes data preparation, model training, quality evaluation, missing link prediction, embedding clustering, and graph structure analysis. 
 
