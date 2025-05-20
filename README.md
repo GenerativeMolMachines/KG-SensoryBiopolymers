@@ -22,12 +22,12 @@ A multimodal deep learning approach for cyclic peptide-based antibiotic discover
 ## Latest updates
  - BindingVsEnergyPredictionModels - API applications for third-party filling of the graph with new links using ML and DL.
  - BiopolymersKG - codes for database operation and statistics
- - preview version of the model for link prediction
+ - [src/learning/KGE.ipynb](https://github.com/GenerativeMolMachines/KG-SensoryBiopolymers/blob/main/src/learning/KGE.ipynb) - preview version of the model for link prediction
 
 \+ updates on personal projects
 
 ## Overview
-[KG_embeddings.ipynb](https://github.com/GenerativeMolMachines/KG-SensoryBiopolymers/blob/main/src/learning/KG_embeddings.ipynb), executed in Google Colab using GPU Tesla T4, represents a complete pipeline for processing a Knowledge Graph (KG) based on triplet data (subject, predicate, object) loaded from a .CSV file. It includes data preparation, model training, quality evaluation, missing link prediction, embedding clustering, and graph structure analysis. 
+[KGE.ipynb](https://github.com/GenerativeMolMachines/KG-SensoryBiopolymers/blob/main/src/learning/KGE.ipynb), executed in Google Colab using GPU Tesla T4, represents a complete pipeline for processing a Knowledge Graph (KG) based on triplet data (subject, predicate, object) loaded from a .CSV file. It includes data preparation, model training, quality evaluation, missing link prediction, embedding clustering, and graph structure analysis. 
 
 ### Environment Setup and Data Preparation 
 In the first stage, the environment is set up. The dataset is loaded from Google Drive and converted into the TriplesFactory structure from pykeen, which maps unique identifiers for entities and relations. The dataset is then split into training, validation, and test sets. 
