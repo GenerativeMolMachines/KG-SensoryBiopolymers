@@ -1,250 +1,179 @@
 import pandas as pd
 import requests
-from tqdm import tqdm
 import time
-import re
-import numpy as np
+from tqdm import tqdm
+from pathlib import Path
 
+# === CONFIG ===
+INPUT_FILE = Path("../../data/BIOGRID-ALL-5.0.250.tab3.txt")
+OUTPUT_DIR = Path("../../data/biogrid_processed")
+OUTPUT_DIR.mkdir(exist_ok=True)
 
-# import initial data
-input_file = 'biogrid.txt'
-output_file = 'biogrid_filtered.csv'
-final_file = 'biogrid_final.csv'
-"""
-data = pd.read_csv(input_file, sep="\t")
+FILTERED_FILE = OUTPUT_DIR / "biogrid_filtered.csv"
+FINAL_FILE = OUTPUT_DIR / "biogrid_ppi_unique.csv"
+PROTEIN_FILE = OUTPUT_DIR / "protein_data_biogrid.csv"
+INTERACTION_FILE = OUTPUT_DIR / "protein_protein_interaction_data.csv"
+STATS_FILE = OUTPUT_DIR / "biogrid_stats.txt"
+AMBIGUITY_TXT = OUTPUT_DIR / "biogrid_ambiguity_stats.txt"
+NAME_TO_SEQ = OUTPUT_DIR / "name_to_sequences.csv"
+SEQ_TO_NAME = OUTPUT_DIR / "sequence_to_names.csv"
 
-print("Data read:")
-print(data.head())
+# === LOAD DATA ===
+print(f"[INFO] Loading dataset from {INPUT_FILE}...")
+df = pd.read_csv(INPUT_FILE, sep="\t", dtype=str, low_memory=False)
+print(f"[INFO] Loaded: {len(df):,} rows, {len(df.columns)} columns.")
 
-columns_to_keep = [
+# === KEEP REQUIRED COLUMNS ===
+COLUMNS_TO_KEEP = [
     "SWISS-PROT Accessions Interactor A",
     "SWISS-PROT Accessions Interactor B",
     "Score",
-    "Qualifications"
+    "Qualifications",
 ]
+missing_cols = [c for c in COLUMNS_TO_KEEP if c not in df.columns]
+if missing_cols:
+    raise ValueError(f"[ERROR] Missing columns in file: {missing_cols}")
 
-missing_columns = [col for col in columns_to_keep if col not in data.columns]
-if missing_columns:
-    print(f"Error: File does not contain these columns: {missing_columns}")
-else:
-    filtered_data = data[columns_to_keep]
+df = df[COLUMNS_TO_KEEP].copy()
+print(f"[INFO] Columns selected. Remaining shape: {df.shape}")
 
-    filtered_data = filtered_data[
-        ~(
-                filtered_data['SWISS-PROT Accessions Interactor A'].str.contains('-', na=False) |
-                filtered_data['SWISS-PROT Accessions Interactor B'].str.contains('-', na=False)
-        )
-    ]
-    filtered_data.reset_index(drop=True, inplace=True)
-    # Save required data
-    filtered_data.to_csv(output_file, index=False)
+# === REMOVE INVALID AND AMBIGUOUS ROWS ===
+initial_len = len(df)
+df = df.dropna(subset=["SWISS-PROT Accessions Interactor A", "SWISS-PROT Accessions Interactor B"])
+df = df[
+    (df["SWISS-PROT Accessions Interactor A"] != "-") &
+    (df["SWISS-PROT Accessions Interactor B"] != "-")
+]
+df = df[
+    ~df["SWISS-PROT Accessions Interactor A"].str.contains(r"\|", na=False) &
+    ~df["SWISS-PROT Accessions Interactor B"].str.contains(r"\|", na=False)
+]
+df = df.drop_duplicates(subset=["SWISS-PROT Accessions Interactor A", "SWISS-PROT Accessions Interactor B"]).reset_index(drop=True)
+filtered_len = len(df)
+print(f"[INFO] Filtered out ambiguous/invalid rows: {initial_len - filtered_len:,} removed, {filtered_len:,} remain.")
 
-    print(filtered_data.info())
-    print(f"Data has been saved into {output_file}")
+# === SAVE FILTERED DATA ===
+df.to_csv(FILTERED_FILE, index=False)
+print(f"[INFO] Filtered dataset saved to {FILTERED_FILE}")
 
-del data
+# === EXTRACT UNIQUE IDs ===
+unique_ids = sorted(set(df["SWISS-PROT Accessions Interactor A"]) | set(df["SWISS-PROT Accessions Interactor B"]))
+print(f"[INFO] Unique SWISS-PROT IDs: {len(unique_ids):,}")
 
-
-# Parsing names and sequences
-data = pd.read_csv(output_file)
-
-
-def extract_first_id(value):
-    if pd.isna(value):
-        return None
-    return value.split("|")[0].strip()
-
-
-data["SWISS-PROT Accessions Interactor A"] = data["SWISS-PROT Accessions Interactor A"].apply(extract_first_id)
-data["SWISS-PROT Accessions Interactor B"] = data["SWISS-PROT Accessions Interactor B"].apply(extract_first_id)
-
-# Unique IDs
-unique_ids = list(set(data["SWISS-PROT Accessions Interactor A"].dropna().tolist() +
-                      data["SWISS-PROT Accessions Interactor B"].dropna().tolist()))
-print(f"\nlength of unique{len(unique_ids)}")
-# Split ID list
-num_parts = 5
-chunks = [unique_ids[i::num_parts] for i in range(num_parts)]
-
-
-def get_protein_data_by_id(protein_id):
+# === RETRIEVE PROTEIN DATA FROM UniProt ===
+def fetch_protein_data(protein_id):
     url = f"https://rest.uniprot.org/uniprotkb/{protein_id}"
     headers = {"Accept": "application/json"}
-
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
-            data = response.json()
-            protein_name = data.get("proteinDescription", {}).get("recommendedName", {}).get("fullName", "Unknown")
-            protein_sequence = data.get("sequence", {}).get("value", "Unknown")
-            return protein_name, protein_sequence
+            js = response.json()
+            name = js.get("proteinDescription", {}).get("recommendedName", {}).get("fullName", {}).get("value")
+            seq = js.get("sequence", {}).get("value")
+            return name, seq
         elif response.status_code == 404:
-            return "Not Found", "Not Found"
+            return None, None
         else:
             return None, None
-    except:
+    except Exception as e:
+        print(f"[WARN] Failed {protein_id}: {e}")
         return None, None
 
+protein_names = {}
+protein_sequences = {}
 
-for part_num, chunk in enumerate(chunks, start=1):
-    protein_names = {}
-    protein_sequences = {}
+for pid in tqdm(unique_ids, desc="Fetching from UniProt"):
+    name, seq = fetch_protein_data(pid)
+    if name and seq:
+        protein_names[pid] = name
+        protein_sequences[pid] = seq
+    time.sleep(0.5)
 
-    for protein_id in tqdm(chunk, desc=f"Processing Part {part_num}"):
-        protein_name, protein_sequence = get_protein_data_by_id(protein_id)
-
-        if protein_name is not None and protein_sequence is not None:
-            protein_names[protein_id] = protein_name
-            protein_sequences[protein_id] = protein_sequence
-
-        time.sleep(1)
-
-    output_data = pd.DataFrame({
-        "Protein ID": list(protein_names.keys()),
-        "Protein Name": list(protein_names.values()),
-        "Protein Sequence": list(protein_sequences.values())
-    })
-    output_data.to_csv(f"p_data_{part_num}.csv", index=False)
-
-print("Processing finished")
-
-intermediate_files = [f"p_data_{i}.csv" for i in range(1, 6)]
-protein_datasets = pd.concat([pd.read_csv(file) for file in intermediate_files])
-
-
-def extract_value(cell):
-    try:
-        match = re.search(r"value(.*?)}", cell)
-        if match:
-            raw_value = match.group(1)
-
-            # Clean till first letter or digit
-            cleaned_start = re.sub(r"^[^a-zA-Z0-9]*", "", raw_value)
-
-            # Clean after last letter or digit
-            cleaned_value = re.sub(r"[^a-zA-Z0-9]*$", "", cleaned_start)
-
-            return cleaned_value
-        else:
-            return np.nan
-    except Exception as e:
-        print(f"Error while processing: {cell}. Error: {e}")
-        return np.nan
-
-
-protein_datasets["Protein Name"] = protein_datasets["Protein Name"].apply(extract_value)
-
-protein_name_map = dict(zip(protein_datasets["Protein ID"], protein_datasets["Protein Name"]))
-protein_sequence_map = dict(zip(protein_datasets["Protein ID"], protein_datasets["Protein Sequence"]))
-
-
-def map_name(protein_id):
-    return protein_name_map.get(protein_id, "Unknown")
-
-
-def map_sequence(protein_id):
-    return protein_sequence_map.get(protein_id, "Unknown")
-
-
-data["name_a"] = data["SWISS-PROT Accessions Interactor A"].apply(map_name)
-data["sequence_a"] = data["SWISS-PROT Accessions Interactor A"].apply(map_sequence)
-data["name_b"] = data["SWISS-PROT Accessions Interactor B"].apply(map_name)
-data["sequence_b"] = data["SWISS-PROT Accessions Interactor B"].apply(map_sequence)
-
-data = data.dropna(subset=["SWISS-PROT Accessions Interactor A", "SWISS-PROT Accessions Interactor B"])
-
-# Save final file
-data.to_csv(final_file, index=False)
-
-print(f"File saved as {final_file}")
-del data
-"""
-# Formate data
-data = pd.read_csv(final_file)
-
-data.drop_duplicates(subset=['name_a', 'name_b', 'sequence_a', 'sequence_b'], inplace=True)
-
-# Processing "bad" values
-data = data.applymap(lambda x: None if x == '-' else x)
-data = data.applymap(lambda x: x.replace('"', '') if isinstance(x, str) else x)
-
-error_values = set()
-symbols_to_remove = {'<', '>', ',', ' '}
-
-
-def convert_to_float(value, symbols_to_remove=None, error_values=None):
-    if pd.isna(value) or value in ['', ' ']:
-        return None
-
-    try:
-        cleaned_value = ''.join(c for c in str(value) if c not in symbols_to_remove).strip()
-
-        # Check for exponential values
-        if 'e' in cleaned_value.lower():
-            base, exponent = cleaned_value.lower().split('e')
-
-            exponent = exponent.replace('+', '')
-
-            base = float(base)
-            exponent = int(exponent)
-
-            return base * (10 ** exponent)
-
-        return float(cleaned_value)
-
-    except (ValueError, TypeError):
-        error_values.add(value)
-        return None
-
-
-data['Score'] = data['Score'].apply(lambda x: convert_to_float(x, symbols_to_remove, error_values))
-print(error_values)
-
-# Forming datasets
-protein_data_a = data[['name_a', 'sequence_a', 'Qualifications']].rename(columns={
-    'name_a': 'name',
-    'sequence_a': 'content',
-    'Qualifications': 'annotation'
+protein_df = pd.DataFrame({
+    "protein_id": list(protein_names.keys()),
+    "protein_name": list(protein_names.values()),
+    "protein_sequence": list(protein_sequences.values())
 })
-protein_data_b = data[['name_b', 'sequence_b', 'Qualifications']].rename(columns={
-    'name_b': 'name',
-    'sequence_b': 'content',
-    'Qualifications': 'annotation'
+protein_df.to_csv(OUTPUT_DIR / "protein_data_raw.csv", index=False)
+print(f"[INFO] Protein metadata saved ({len(protein_df):,} records).")
+
+# === MERGE BACK INTO MAIN TABLE ===
+id_to_name = dict(zip(protein_df["protein_id"], protein_df["protein_name"]))
+id_to_seq = dict(zip(protein_df["protein_id"], protein_df["protein_sequence"]))
+
+df["protein_name_a"] = df["SWISS-PROT Accessions Interactor A"].map(id_to_name)
+df["protein_sequence_a"] = df["SWISS-PROT Accessions Interactor A"].map(id_to_seq)
+df["protein_name_b"] = df["SWISS-PROT Accessions Interactor B"].map(id_to_name)
+df["protein_sequence_b"] = df["SWISS-PROT Accessions Interactor B"].map(id_to_seq)
+
+# === CLEAN AND DROP DUPLICATES ===
+df.dropna(subset=["protein_sequence_a", "protein_sequence_b"], inplace=True)
+df.drop_duplicates(subset=["protein_name_a", "protein_name_b", "protein_sequence_a", "protein_sequence_b"], inplace=True)
+df.reset_index(drop=True, inplace=True)
+df.to_csv(FINAL_FILE, index=False)
+print(f"[INFO] Final combined data saved to {FINAL_FILE} ({len(df):,} rows).")
+
+# === CREATE ENTITY DATASETS ===
+protein_data_a = df[["protein_name_a", "protein_sequence_a", "Qualifications"]].rename(columns={
+    "protein_name_a": "protein_name",
+    "protein_sequence_a": "protein_sequence",
+    "Qualifications": "annotation",
 })
-
-# Add required columns
-protein_data_a['type'] = 'protein'
-protein_data_a['subtype'] = None
-protein_data_a['representation_type'] = 'sequence'
-
-protein_data_b['type'] = 'protein'
-protein_data_b['subtype'] = None
-protein_data_b['representation_type'] = 'sequence'
-
-# Unite data with dropping duplicates
-protein_data = pd.concat([protein_data_a, protein_data_b]).drop_duplicates(subset=['name', 'content']).reset_index(drop=True)
-
-# Create interaction_data
-interaction_data = data[['name_a', 'name_b', 'Score']].rename(columns={
-    'name_a': 'protein_name_a',
-    'name_b': 'protein_name_b',
+protein_data_b = df[["protein_name_b", "protein_sequence_b", "Qualifications"]].rename(columns={
+    "protein_name_b": "protein_name",
+    "protein_sequence_b": "protein_sequence",
+    "Qualifications": "annotation",
 })
+protein_data = pd.concat([protein_data_a, protein_data_b], ignore_index=True).drop_duplicates(subset=["protein_name", "protein_sequence"])
+protein_data["type"] = "protein"
+protein_data["subtype"] = None
+protein_data["representation_type"] = "sequence"
+protein_data.to_csv(PROTEIN_FILE, index=False)
+print(f"[INFO] Protein dataset saved to {PROTEIN_FILE} ({len(protein_data):,} unique proteins).")
 
-interaction_data['kd'] = None
+# === ANALYZE AMBIGUITIES ===
+print("[INFO] Analyzing name/sequence ambiguities...")
 
-# Dropping dupclicates
-protein_data.drop_duplicates(subset=['name', 'content'], inplace=True)
-interaction_data.drop_duplicates(subset=['protein_name_a', 'protein_name_b'], inplace=True)
+# name to sequences
+name_to_sequences = protein_data.groupby("protein_name")["protein_sequence"].unique()
+name_multi = name_to_sequences[name_to_sequences.map(len) > 1]
 
-protein_data.reset_index(drop=True, inplace=True)
-interaction_data.reset_index(drop=True, inplace=True)
+# sequence to names
+seq_to_names = protein_data.groupby("protein_sequence")["protein_name"].unique()
+seq_multi = seq_to_names[seq_to_names.map(len) > 1]
 
-# Save data
-protein_data.to_csv('protein_data_biogrid.csv', index=False)
-interaction_data.to_csv('protein_protein_interaction_data.csv', index=False)
+# Save CSVs
+name_multi.reset_index().to_csv(NAME_TO_SEQ, index=False)
+seq_multi.reset_index().to_csv(SEQ_TO_NAME, index=False)
 
-print("Protein Data:")
-print(protein_data.info())
+# Save TXT summary
+with open(AMBIGUITY_TXT, "w", encoding="utf-8") as f:
+    f.write(f"Total proteins: {len(protein_data):,}\n")
+    f.write(f"Name to Sequences ambiguous cases: {len(name_multi):,}\n")
+    f.write(f"Sequence to Names ambiguous cases: {len(seq_multi):,}\n")
+    f.write("\nTop examples (Name to Sequences):\n")
+    for name, seqs in name_multi.head(5).items():
+        f.write(f"  {name}: {len(seqs)} variants\n")
+    f.write("\nTop examples (Sequence to Names):\n")
+    for seq, names in seq_multi.head(5).items():
+        f.write(f"  seq[{seq[:15]}...]: {len(names)} variants\n")
 
-print("\nInteraction Data:")
-print(interaction_data.info())
+print(f"[INFO] Ambiguity statistics saved to {AMBIGUITY_TXT}")
+print(f"[INFO] name to seq CSV: {NAME_TO_SEQ}")
+print(f"[INFO] seq to name CSV: {SEQ_TO_NAME}")
+
+# === SUMMARY STATS ===
+stats = {
+    "initial_rows": initial_len,
+    "filtered_rows": filtered_len,
+    "unique_proteins": len(unique_ids),
+    "retrieved_from_uniprot": len(protein_df),
+    "final_rows": len(df),
+    "name_to_sequences_ambiguous": len(name_multi),
+    "sequence_to_names_ambiguous": len(seq_multi),
+}
+with open(STATS_FILE, "w", encoding="utf-8") as f:
+    for k, v in stats.items():
+        f.write(f"{k}: {v}\n")
+print(f"[INFO] Statistics saved to {STATS_FILE}")
+print("[DONE] Biogrid processing pipeline completed successfully.")
