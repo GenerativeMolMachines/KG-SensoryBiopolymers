@@ -7,6 +7,9 @@ This project aims to develop a multimodal model based on a knowledge graph of se
 ### [BiopolymersKG](https://github.com/GenerativeMolMachines/BiopolymersKG)
 Development of a system using knowledge graph-based embeddings and machine learning methods.
 
+### [MultimodalMols](https://github.com/GenerativeMolMachines/MultimodalMols)
+An updated architectures for processing point clouds and graphs.
+
 ### [BindingVsEnergyPredictionModels](https://github.com/GenerativeMolMachines/BindingVsEnergyPredictionModels)
 API applications of models for predicting binding, mfe and affinity between different structures and complexes to populate the graph.
 
@@ -15,6 +18,9 @@ Machine learning on autoencoder- and LLM-derived embeddings for the design of hi
 
 ### [AntibodyAptamerGeneration](https://github.com/GenerativeMolMachines/AntibodyAptamerGeneration)
 Development of a model to generate optimal aptamer sequences based on antibody and target data, offering a faster and more reliable alternative to antibodies for medical and research applications.
+
+### [AptaBench](https://github.com/GenerativeMolMachines/AptaBench)
+An unified benchmark suite for aptamer–small molecule interaction prediction
 
 ### [CyclicPeptideDesign](https://github.com/GenerativeMolMachines/CyclicPeptideDesign)
 A multimodal deep learning approach for cyclic peptide-based antibiotic discovery.
@@ -26,6 +32,10 @@ A multimodal deep learning approach for cyclic peptide-based antibiotic discover
  - Added AptaBench repository:
 
 The project now includes AptaBench, a unified benchmark suite for aptamer–small molecule interaction prediction.  It provides a standardized dataset, a complete preprocessing pipeline, leakage-free evaluation splits, and updated benchmarking results for both classical and deep learning models. Reproducible training and evaluation scripts have been integrated, ensuring a consistent and comparable benchmarking workflow across experiments.
+
+ - Added MultimodalMols repository:
+
+We have trained architectures for processing molecular data in the format of three-dimensional point clouds and in the format of molecular graphs, so we will be able to obtain appropriate embeddings for these modalities.
  - BindingVsEnergyPredictionModels - API applications for third-party filling of the graph with new links using ML and DL.
 
 \+ updates on personal projects
