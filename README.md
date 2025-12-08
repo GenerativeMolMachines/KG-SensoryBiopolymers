@@ -20,10 +20,13 @@ Development of a model to generate optimal aptamer sequences based on antibody a
 A multimodal deep learning approach for cyclic peptide-based antibiotic discovery.
 
 ## Latest updates
- - A scalable end-to-end system for link prediction in a multi-relational biopolymer knowledge graph was developed, including data extraction (Neo4j), preprocessing, training, inference, and evaluation. The framework integrates PyTorch-BigGraph (primary) and PyKEEN (experimental), supports multiple operators and negative sampling strategies, and provides reproducible configuration via DVC and Hydra. Comprehensive ranking and binary metrics (MRR, MAP, Hits@K, NDCG@K and Precision/Recall/F1) are implemented to assess model quality across test subsets.
+ - Update BiopolymersKG repository: 
+ 
+ A scalable end-to-end system for link prediction in a multi-relational biopolymer knowledge graph was developed, including data extraction (Neo4j), preprocessing, training, inference, and evaluation. The framework integrates PyTorch-BigGraph (primary) and PyKEEN (experimental), supports multiple operators and negative sampling strategies, and provides reproducible configuration via DVC and Hydra. Comprehensive ranking and binary metrics (MRR, MAP, Hits@K, NDCG@K and Precision/Recall/F1) are implemented to assess model quality across test subsets.
+ - Added AptaBench repository:
+
+The project now includes AptaBench, a unified benchmark suite for aptamer–small molecule interaction prediction.  It provides a standardized dataset, a complete preprocessing pipeline, leakage-free evaluation splits, and updated benchmarking results for both classical and deep learning models. Reproducible training and evaluation scripts have been integrated, ensuring a consistent and comparable benchmarking workflow across experiments.
  - BindingVsEnergyPredictionModels - API applications for third-party filling of the graph with new links using ML and DL.
- - BiopolymersKG - codes for database operation and statistics
- - [src/learning/KGE.ipynb](https://github.com/GenerativeMolMachines/KG-SensoryBiopolymers/blob/main/src/learning/KGE.ipynb) - preview version of the model for link prediction
 
 \+ updates on personal projects
 
