@@ -36,9 +36,11 @@ The project now includes AptaBench, a unified benchmark suite for aptamer–smal
  - Added MultimodalMols repository:
 
 We have trained architectures for processing molecular data in the format of three-dimensional point clouds and in the format of molecular graphs, so we will be able to obtain appropriate embeddings for these modalities.
- - BindingVsEnergyPredictionModels - API applications for third-party filling of the graph with new links using ML and DL.
+ - Update BindingVsEnergyPredictionModels:
+ 
+ Add new API applications for link prediction.
 
-\+ updates on personal projects
+ - \+ updates on personal projects
 
 ## Acknowledgements
 
