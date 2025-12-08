@@ -13,3 +13,6 @@
 [submodule "siRNA_RPAII"]
 	path = siRNA_RPAII
 	url = git@github.com:GenerativeMolMachines/siRNA_RPAII.git
+[submodule "AptaBench"]
+	path = AptaBench
+	url = git@github.com:GenerativeMolMachines/AptaBench.git
