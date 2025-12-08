@@ -16,3 +16,6 @@
 [submodule "AptaBench"]
 	path = AptaBench
 	url = git@github.com:GenerativeMolMachines/AptaBench.git
+[submodule "MultimodalMols"]
+	path = MultimodalMols
+	url = git@github.com:GenerativeMolMachines/MultimodalMols.git
