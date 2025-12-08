@@ -1,6 +1,3 @@
-[submodule "BiopolymersKG"]
-	path = BiopolymersKG
-	url = git@github.com:GenerativeMolMachines/BiopolymersKG.git
 [submodule "AntibodyAptamerGeneration"]
 	path = AntibodyAptamerGeneration
 	url = git@github.com:GenerativeMolMachines/AntibodyAptamerGeneration.git
